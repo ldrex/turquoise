@@ -42,4 +42,4 @@ Here’s what I’m aiming to add as I learn:
    - Code Quality: Since I’m new and using AI-generated code, some parts might not be “perfect” by pro standards. That’s part of the journey, I’m learning what works and what doesn’t.
 
 ## License
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/ldrex/torquoise/LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
