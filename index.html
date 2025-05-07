@@ -1,10 +1,197 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>TurboWolf.CN</title>
-  </head>
-  <body>
-    <h1>Under Construction</h1>
-    <p>Coming soon...</p>
-  </body>
+<head>
+    <title>::TURBOWOLF><CN::</title>
+    <link href="https://fonts.googleapis.com/css2?family=Micro+5&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000000;
+            color: #FFFFFF; /* Default text color for the page */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Micro 5', sans-serif; /* Default font */
+        }
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px; /* Space between grid area and clock */
+        }
+
+        #grid-area-wrapper {
+            position: relative;
+            /* Dimensions will be implicitly set by the grid container */
+            /* Expected width: (10 * 20px) + (9 * 20px) = 380px */
+            /* Expected height: (10 * 20px) + (9 * 20px) = 380px */
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(10, 20px);
+            grid-template-rows: repeat(10, 20px); /* Uniform row height */
+            gap: 20px;
+        }
+
+        .turbowolf-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            /* Spans 4 squares (4*20px) and 3 gaps (3*20px) */
+            width: calc((4 * 20px) + (3 * 20px)); /* 140px */
+            height: 20px; /* Matches the height of the first row of squares */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Micro 5', sans-serif;
+            font-size: 32pt; /* Text will visually overflow the 20px height */
+            color: #FFFFFF;
+            background-color: #000000; /* Background for the text overlay */
+            z-index: 10; /* Ensure it's above the grid squares */
+            pointer-events: none; /* Allows clicks to pass through if squares had events */
+        }
+
+        .grid-item {
+            width: 20px;
+            height: 20px;
+            background-color: #FFFFFF; /* Base color for colorable squares */
+        }
+
+        #clockContainer {
+            /* Centering is handled by .content-wrapper */
+        }
+
+        #clock {
+            font-family: 'Micro 5', sans-serif;
+            font-size: 24pt;
+            color: #FFFFFF;
+            text-align: center;
+        }
+        /* The colon span's color will be controlled by JavaScript */
+        #colon {
+            /* No specific style needed here unless for transition (optional) */
+        }
+    </style>
+</head>
+<body>
+
+<div class="content-wrapper">
+    <div id="grid-area-wrapper">
+        <div class="turbowolf-overlay" id="turbowolfText">TURBOWOLF</div>
+        <div class="grid-container" id="gridContainer">
+            </div>
+    </div>
+    <div id="clockContainer">
+        <div id="clock">
+            UTC <span id="hours">hh</span><span id="colon">:</span><span id="minutes">mm</span> <span id="ampm">AM</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const gridContainer = document.getElementById('gridContainer');
+    const colors = ['#0000C0', '#C00000', '#C000C0', '#00C000', '#00C0C0', '#C0C000'];
+    const numRows = 10;
+    const numCols = 10;
+    const totalSquaresInGrid = numRows * numCols;
+
+    let colorableSquares = [];
+    const allGridSquares = []; // To hold all 100 square elements
+
+    // Create the 10x10 grid squares
+    for (let i = 0; i < totalSquaresInGrid; i++) {
+        const square = document.createElement('div');
+        square.classList.add('grid-item');
+        // square.id = `square-${i}`; // Optional: for debugging
+        
+        // The first 4 squares (indices 0, 1, 2, 3) are under the TURBOWOLF overlay.
+        // They will still have a base color of #FFFFFF as per grid-item style,
+        // but the overlay has its own black background ensuring text readability.
+        // These first 4 squares are not added to 'colorableSquares'.
+        if (i >= 4) {
+            colorableSquares.push(square);
+        }
+        allGridSquares.push(square); // Keep track of all squares if needed later
+        gridContainer.appendChild(square);
+    }
+
+
+    function getRandomInt(min, max) {
+        if (min > max) return min; // Safety for invalid range
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function shuffleArray(array) {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+    }
+
+    function updateColoredSquares() {
+        colorableSquares.forEach(square => {
+            square.style.backgroundColor = '#FFFFFF'; // Reset to white
+        });
+
+        const maxSquaresToColor = Math.min(5, colorableSquares.length);
+        if (maxSquaresToColor < 2) return; 
+        
+        const numToColor = getRandomInt(2, maxSquaresToColor);
+
+        let shuffledSquareIndices = shuffleArray(Array.from(Array(colorableSquares.length).keys()));
+        let selectedSquareIndices = shuffledSquareIndices.slice(0, numToColor);
+        let shuffledColors = shuffleArray(colors);
+
+        selectedSquareIndices.forEach((squareIndex, i) => {
+            if (i < shuffledColors.length) { 
+                colorableSquares[squareIndex].style.backgroundColor = shuffledColors[i];
+            } else {
+                // Fallback: reuse colors if more squares than unique colors (should not happen here)
+                colorableSquares[squareIndex].style.backgroundColor = shuffledColors[i % shuffledColors.length];
+            }
+        });
+    }
+
+    // Clock elements
+    const hoursSpan = document.getElementById('hours');
+    const colonSpan = document.getElementById('colon');
+    const minutesSpan = document.getElementById('minutes');
+    const ampmSpan = document.getElementById('ampm');
+
+    function updateClock() {
+        const now = new Date();
+        let currentUTCHours = now.getUTCHours();
+        const currentUTCMinutes = String(now.getUTCMinutes()).padStart(2, '0');
+        const currentUTCSeconds = now.getUTCSeconds();
+        
+        const ampmString = currentUTCHours >= 12 ? 'PM' : 'AM';
+        currentUTCHours = currentUTCHours % 12;
+        currentUTCHours = currentUTCHours ? currentUTCHours : 12; // Convert 0 to 12 for AM/PM format
+        const displayHours = String(currentUTCHours).padStart(2, '0');
+
+        hoursSpan.textContent = displayHours;
+        minutesSpan.textContent = currentUTCMinutes;
+        ampmSpan.textContent = ampmString;
+        
+        // Toggle colon color for flashing effect
+        colonSpan.style.color = currentUTCSeconds % 2 === 0 ? '#FFFFFF' : '#000000';
+    }
+
+    // Initial setup and intervals
+    if (colorableSquares.length >= 2) {
+       updateColoredSquares();
+       setInterval(updateColoredSquares, 984);
+    } else {
+        console.warn("Not enough colorable squares (need at least 2) for animation.");
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+</script>
+
+</body>
 </html>
